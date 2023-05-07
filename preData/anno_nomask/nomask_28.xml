@@ -1,0 +1,26 @@
+<annotation>
+	<folder>nomask</folder>
+	<filename>nomask_28.jpg</filename>
+	<path>D:\PycharmProject(D)\kz_demo\preData\nomask\nomask_28.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>400</width>
+		<height>710</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>nomask</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>110</xmin>
+			<ymin>256</ymin>
+			<xmax>286</xmax>
+			<ymax>523</ymax>
+		</bndbox>
+	</object>
+</annotation>

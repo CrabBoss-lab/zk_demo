@@ -1,0 +1,26 @@
+<annotation>
+	<folder>mask</folder>
+	<filename>mask_92.jpg</filename>
+	<path>D:\PycharmProject(D)\kz_demo\preData\mask\mask_92.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>890</width>
+		<height>500</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>mask</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>398</xmin>
+			<ymin>6</ymin>
+			<xmax>657</xmax>
+			<ymax>356</ymax>
+		</bndbox>
+	</object>
+</annotation>
