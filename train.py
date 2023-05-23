@@ -4,6 +4,7 @@ import torch.nn as nn
 import torchvision
 from torchvision import transforms
 from PIL import Image
+from torchvision.datasets import ImageFolder
 
 
 class CNN(nn.Module):
@@ -43,61 +44,69 @@ class CNN(nn.Module):
 
 # 定义数据增强和预处理操作
 transform = transforms.Compose([
-    transforms.Resize((224, 224)),  # 调整图像大小为224x224
-    transforms.ToTensor(),  # 转换为张量
+    transforms.Resize((224, 224)),   # 调整图像大小为224x224
+    transforms.ToTensor(),           # 转换为张量
     transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])  # 标准化
 ])
 
-# 加载模型参数
+# 加载带标签的图像数据集，并划分训练集和测试集
+dataset = ImageFolder(root='dataset', transform=transform)
+train_size = int(0.8 * len(dataset))
+test_size = len(dataset) - train_size
+train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
+
+# 定义数据加载器
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=32, shuffle=True)
+test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=32, shuffle=False)
+
+# 定义模型
 model = CNN(num_classes=2)
-model.load_state_dict(torch.load('best_model.pth'))
-model.eval()
 
-# 加载级联检测器
-face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+# 定义损失函数和优化器
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-# 打开摄像头
-cap = cv2.VideoCapture(0)
+best_acc = 0
+epochs = 10
+for epoch in range(epochs):
+    # 训练模型
+    model.train()
+    train_loss = 0
+    train_correct = 0
+    train_total = 0
+    for images, labels in train_loader:
+        optimizer.zero_grad()
+        outputs = model(images)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+        train_loss += loss.item()
+        _, predicted = torch.max(outputs.data, 1)
+        train_total += labels.size(0)
+        train_correct += (predicted == labels).sum().item()
 
-while True:
-    # 读取摄像头图像
-    ret, frame = cap.read()
-    if not ret:
-        break
-
-    # 使用级联检测器检测人脸区域
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-
-    # 对每个人脸区域进行预测
-    for (x, y, w, h) in faces:
-        # 提取人脸区域并进行预处理
-        face_img = frame[y:y + h, x:x + w]
-        pil_img = Image.fromarray(cv2.cvtColor(face_img, cv2.COLOR_BGR2RGB))
-        img = transform(pil_img)
-        img = img.unsqueeze(0)
-
-        # 使用模型进行预测
-        with torch.no_grad():
-            outputs = model(img)
+    # 在测试集上计算准确率
+    model.eval()
+    test_loss = 0
+    test_correct = 0
+    test_total = 0
+    with torch.no_grad():
+        for images, labels in test_loader:
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+            test_loss += loss.item()
             _, predicted = torch.max(outputs.data, 1)
-            label = predicted.item()
+            test_total += labels.size(0)
+            test_correct += (predicted == labels).sum().item()
 
-        # 在图像上绘制预测结果
-        if label == 0:
-            text = 'mask'
-        else:
-            text = 'nomask'
-        # cv2.putText(frame, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-        # cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
+    train_loss /= len(train_loader)
+    train_acc = 100 * train_correct / train_total
+    test_loss /= len(test_loader)
+    test_acc = 100 * test_correct / test_total
+    print('Epoch [{}/{}]\tTrain Loss: {:.4f}\tTrain Acc: {:.2f}%\tTest Loss: {:.4f}\tTest Acc: {:.2f}%'
+          .format(epoch+1, epochs, train_loss, train_acc, test_loss, test_acc))
 
-    # 显示图像
-    cv2.imshow('Camera', frame)
-
-    # 检测键盘输入，按下“q”键退出程序
-    if cv2.waitKey(1) == ord('q'):
-        break
-
-# 释放摄像头并关闭窗口
-cap.release()
-cv2.destroyAllWindows()
+    # 保存最好的模型参数
+    if test_acc > best_acc:
+        torch.save(model.state_dict(), 'best_model.pth')
+        best_acc = test_acc
