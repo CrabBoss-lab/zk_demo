@@ -106,7 +106,7 @@ for epoch in range(epochs):
     print('Epoch [{}/{}]\tTrain Loss: {:.4f}\tTrain Acc: {:.2f}%\tTest Loss: {:.4f}\tTest Acc: {:.2f}%'
           .format(epoch+1, epochs, train_loss, train_acc, test_loss, test_acc))
 
-    # 保存最好的模型参数
+    ## 保存最好的模型参数
     if test_acc > best_acc:
         torch.save(model.state_dict(), 'best_model.pth')
         best_acc = test_acc
