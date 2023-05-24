@@ -44,7 +44,7 @@ model = CNN(num_classes=2)
 model.load_state_dict(torch.load('best_model.pth'))
 model.eval()  # 预测
 
-# # 2、加载待预测图片
+## # 2、加载待预测图片
 # # img_path='mask.png'
 # img = Image.open(img_path)
 
